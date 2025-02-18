@@ -8,12 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Helper to verify request origin
-const isValidOrigin = (origin: string | undefined) => {
-  if (config.isDevelopment) return true;
-  return origin && config.allowedOrigins.includes(origin);
-};
-
 // Sanitize inputs
 const sanitizeString = (str: string) => {
   return str.replace(/[^a-zA-Z0-9\s-]/g, "").trim();
