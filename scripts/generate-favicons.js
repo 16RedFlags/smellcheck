@@ -1,20 +1,17 @@
 const sharp = require("sharp");
-const fs = require("fs").promises;
 const path = require("path");
-const { createCanvas } = require("canvas");
 
 async function generateFavicons() {
   const publicDir = path.join(__dirname, "../public");
 
-  // Create a canvas and draw the emoji
-  const canvas = createCanvas(512, 512);
-  const ctx = canvas.getContext("2d");
-  ctx.font = "512px 'Segoe UI Emoji'";
-  ctx.fillText("👃", 0, 440);
-
-  // Save the canvas as PNG
-  const buffer = canvas.toBuffer("image/png");
-  await fs.writeFile(path.join(__dirname, "../favicon-source.png"), buffer);
+  // Create a simple colored square with rounded corners
+  const size = 512;
+  const svg = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="${size}" height="${size}" rx="100" fill="#262B36"/>
+      <text x="50%" y="50%" font-family="Arial" font-size="300" fill="white" text-anchor="middle" dy=".35em">👃</text>
+    </svg>
+  `;
 
   // Generate different sizes
   const sizes = {
@@ -24,7 +21,7 @@ async function generateFavicons() {
   };
 
   for (const [filename, size] of Object.entries(sizes)) {
-    await sharp(path.join(__dirname, "../favicon-source.png"))
+    await sharp(Buffer.from(svg))
       .resize(size, size)
       .png()
       .toFile(path.join(publicDir, filename));
@@ -32,7 +29,7 @@ async function generateFavicons() {
   }
 
   // Generate ICO file
-  await sharp(path.join(__dirname, "../favicon-source.png"))
+  await sharp(Buffer.from(svg))
     .resize(32, 32)
     .toFormat("ico")
     .toFile(path.join(publicDir, "favicon.ico"));
