@@ -3,14 +3,25 @@ import Head from "next/head";
 import SmellSelector from "../components/SmellSelector";
 import { supabase, Smell } from "../utils/supabaseClient";
 
+// Add this type to better handle the data
+interface SmellResult {
+  id: number;
+  name: string;
+  location: string;
+  causes: string[];
+  solutions: string[];
+}
+
 export default function Home() {
-  const [results, setResults] = useState<Smell[]>([]);
+  const [results, setResults] = useState<SmellResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSelectionChange = async (smell: string, location: string) => {
     if (!smell || !location) return;
 
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch("/api/smells", {
         method: "POST",
@@ -24,18 +35,21 @@ export default function Home() {
 
       if (!response.ok) {
         const error = await response.json();
-        console.error("API Error:", error);
-        return;
+        throw new Error(error.message || "Failed to fetch results");
       }
 
       const data = await response.json();
       console.log("Response data:", data);
 
-      if (data && Array.isArray(data)) {
-        setResults(data);
+      if (!data || !Array.isArray(data)) {
+        throw new Error("Invalid response format");
       }
+
+      setResults(data);
     } catch (error) {
       console.error("Error fetching results:", error);
+      setError(error instanceof Error ? error.message : "An error occurred");
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -77,6 +91,12 @@ export default function Home() {
           onLocationChange={clearResults}
         />
 
+        {error && (
+          <div className="mt-5 p-4 bg-red-500/20 text-red-200 rounded">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-5">
             <div className="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
@@ -86,14 +106,28 @@ export default function Home() {
             <div className="mt-5 space-y-4">
               {results.map((result) => (
                 <div key={result.id} className="bg-surface rounded p-5">
-                  <div className="text-white text-lg">
-                    <span className="text-gray-400">Possible Cause: </span>
-                    {result.causes[0]}
-                  </div>
-                  <div className="text-white mt-3 text-lg">
-                    <span className="text-gray-400">Solution: </span>
-                    {result.solutions[0]}
-                  </div>
+                  {result.causes.map((cause, index) => (
+                    <div
+                      key={`cause-${index}`}
+                      className="text-white text-lg mb-4"
+                    >
+                      <span className="text-gray-400">
+                        Possible Cause {index + 1}:{" "}
+                      </span>
+                      {cause}
+                    </div>
+                  ))}
+                  {result.solutions.map((solution, index) => (
+                    <div
+                      key={`solution-${index}`}
+                      className="text-white text-lg"
+                    >
+                      <span className="text-gray-400">
+                        Solution {index + 1}:{" "}
+                      </span>
+                      {solution}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
