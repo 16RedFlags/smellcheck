@@ -26,7 +26,11 @@ export default async function handler(
   // Basic origin checking (disabled in development)
   if (!config.isDevelopment) {
     const origin = req.headers.origin;
+    console.log("Received origin:", origin);
+
     if (!isValidOrigin(origin)) {
+      console.log("Invalid origin:", origin);
+      console.log("Allowed origins:", config.allowedOrigins);
       return res.status(403).json({ error: "Forbidden" });
     }
     // Set CORS headers in production
