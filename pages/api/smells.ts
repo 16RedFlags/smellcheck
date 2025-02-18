@@ -23,20 +23,22 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Basic origin checking (disabled in development)
-  if (!config.isDevelopment) {
-    const origin = req.headers.origin;
-    console.log("Received origin:", origin);
+  // Set CORS headers for all requests
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+  );
 
-    if (!isValidOrigin(origin)) {
-      console.log("Invalid origin:", origin);
-      console.log("Allowed origins:", config.allowedOrigins);
-      return res.status(403).json({ error: "Forbidden" });
-    }
-    // Set CORS headers in production
-    res.setHeader("Access-Control-Allow-Origin", origin!);
-    res.setHeader("Access-Control-Allow-Methods", "POST");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // Handle preflight request
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== "POST") {
